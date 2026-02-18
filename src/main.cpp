@@ -45,8 +45,7 @@ int main(int argc, char *argv[]) {
             auto code = elf64->getFunctionCode(idx);
             std::println(
                 "main:\n{}",
-                disassemble::disassembleX86_64(
-                    code, disassemble::ReadingMode::LSB));
+                disassemble::disassembleX86_64(code));
         } else {
             std::println("main function not found");
         }

@@ -7,12 +7,7 @@
 
 namespace disassemble {
 
-enum class ReadingMode {
-    LSB,
-    MSB,
-};
-
-std::string disassembleX86_64(const std::span<const uint8_t> code, ReadingMode readingMode);
+std::string disassembleX86_64(const std::span<const uint8_t> code);
 
 };
 
