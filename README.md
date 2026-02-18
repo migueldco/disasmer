@@ -1,19 +1,11 @@
 # disasmer
 
-Simple x86-64 diassembler
+Simple tool for analyzing binaries.
 
-Currently a WIP.
+Currently a WIP. (Only supports x86-64 ELF files)
 
-## DONE
-- Reading elf files
-    - Reading symbols from symbol table
-    - Finding the locations of functions
-- Disassembling a few x86 instructions
-## In Progress
-- Refactor the instruction decoder/disassembler
-## TODO
-- Demangling C++ names
-- Patching
-- High level representation of assembly instructions (`RAX += 15`)
-- More ISAs
-- More executable types
+# Next steps
+- [ ] Add support for more file formats (PE)
+- [ ] Add support for more architectures (ARM, MIPS, RISC-V)
+- [ ] Add demangling support for C++ symbols
+- [ ] Implement a high level language for decompilation
