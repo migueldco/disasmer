@@ -9,6 +9,8 @@ namespace disassemble {
 
 std::string disassembleX86_64(const std::span<const uint8_t> code);
 
+std::string decodeX86_64(const std::span<const uint8_t> code);
+
 };
 
 #endif

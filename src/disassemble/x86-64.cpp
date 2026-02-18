@@ -11,10 +11,6 @@ namespace disassemble {
 
 namespace X86_64 {
 
-// =============================================================================
-// Register definitions
-// =============================================================================
-
 enum class Register : uint8_t {
 	RAX = 0,
 	RCX,
@@ -938,8 +934,55 @@ static std::string formatInstruction(const DecodedInstruction &inst) {
 	return result;
 }
 
+static std::string stringifyMemoryRef(const MemoryOperand &mem, uint8_t size) {
+	std::string result;
+	result += '@';
+	if (mem.ripRelative) {
+		result += "G_";
+	}
+	if (mem.displacement >= 0) {
+		result += std::format("{:#x}#{}", mem.displacement, size);
+	} else {
+		result += std::format("-{:#x}#{}", -mem.displacement, size);
+	}
+	return result;
+}
+
+static std::string stringifyOperand(const Operand &op) {
+	switch (op.kind) {
+	case Operand::Kind::Register:
+		return std::format("${}", registerName(op.reg, op.size));
+	case Operand::Kind::Memory:
+		return stringifyMemoryRef(op.mem, op.size);
+	case Operand::Kind::Immediate:
+		if (op.imm < 0)
+			return std::format("-{:#x}", -op.imm);
+		else
+			return std::format("{:x}", op.imm);
+	case Operand::Kind::None:
+		return "";
+	}
+	return "";
+}
+
+static std::string stringifyInstruction(const DecodedInstruction &inst) {
+	std::string result;
+	result += inst.mnemonic;
+	if (inst.operandCount > 0) {
+		result += '(';
+		result += stringifyOperand(inst.operands[0]);
+		if (inst.operandCount > 1) {
+			result += ',';
+			result += stringifyOperand(inst.operands[1]);
+		}
+		result += ')';
+	}
+	return result;
+}
+
 }; // namespace X86_64
 
+// Disassemble in human-readable assembly
 std::string disassembleX86_64(const std::span<const uint8_t> code) {
 	std::string result;
 	X86_64::InstructionDecoder decoder(code);
@@ -949,6 +992,21 @@ std::string disassembleX86_64(const std::span<const uint8_t> code) {
 		if (!inst)
 			break;
 		result += X86_64::formatInstruction(*inst);
+		result += '\n';
+	}
+	return result;
+}
+
+// Disassemble into an easily-parsable format
+std::string decodeX86_64(const std::span<const uint8_t> code) {
+	std::string result;
+	X86_64::InstructionDecoder decoder(code);
+
+	while (!decoder.done()) {
+		auto inst = decoder.decode();
+		if (!inst)
+			break;
+		result += X86_64::stringifyInstruction(*inst);
 		result += '\n';
 	}
 	return result;

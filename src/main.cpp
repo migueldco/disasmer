@@ -1,12 +1,10 @@
 #include <binary.hpp>
 #include <disassemble.hpp>
+#include <demangle.hpp>
+
 #include <elf.h>
 #include <iostream>
 #include <print>
-
-bool isNameMangled([[maybe_unused]] std::string_view name) {
-    return name.starts_with("_Z");
-}
 
 size_t readSize(std::string_view data, size_t &position) {
     size_t ret = 0;
@@ -16,11 +14,6 @@ size_t readSize(std::string_view data, size_t &position) {
         position++;
     }
     return ret;
-}
-
-std::string demangleCpp([[maybe_unused]] std::string_view name) {
-    std::string result(name);
-    return result;
 }
 
 int main(int argc, char *argv[]) {
@@ -45,7 +38,7 @@ int main(int argc, char *argv[]) {
             auto code = elf64->getFunctionCode(idx);
             std::println(
                 "main:\n{}",
-                disassemble::disassembleX86_64(code));
+                disassemble::decodeX86_64(code));
         } else {
             std::println("main function not found");
         }
