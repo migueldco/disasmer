@@ -9,10 +9,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(SOURCES
     src/main.cpp
-	src/binary.cpp
+	src/binary/binary.cpp
 	include/binary.hpp
 	src/disassemble/x86-64.cpp
 	include/disassemble.hpp
+	src/analysis/demangle.cpp
+	include/demangle.hpp
 )
 
 add_executable(disasmer ${SOURCES})

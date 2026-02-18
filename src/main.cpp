@@ -26,6 +26,9 @@ int main(int argc, char *argv[]) {
         [[maybe_unused]] auto header = elf32->getHeader();
     } else if (auto elf64 = dynamic_cast<binary::Elf64 *>(bin.get())) {
         auto functions = elf64->getFunctions();
+		for (auto fn : functions) {
+			std::cout << analysis::demangleCpp(fn.name) << std::endl;
+		}
         std::optional<size_t> mainIdx;
         for (size_t i = 0; i < functions.size(); i++) {
             auto function = functions[i];
@@ -33,6 +36,7 @@ int main(int argc, char *argv[]) {
                 mainIdx = i;
             }
         }
+		return 0;
         if (mainIdx.has_value()) {
             [[maybe_unused]] auto idx = mainIdx.value();
             auto code = elf64->getFunctionCode(idx);
