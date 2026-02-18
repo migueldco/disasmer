@@ -1,15 +1,23 @@
-#ifndef _BINARY_HPP_
-#define _BINARY_HPP_
+#ifndef BINARY_HPP
+#define BINARY_HPP
 
+#include <concepts>
 #include <cstdint>
-#include <elf.h>
 #include <functional>
 #include <memory>
+#include <span>
 #include <string_view>
 #include <vector>
-#include <span>
 
 namespace binary {
+
+enum class Architecture {
+	X86_64,
+	X86,
+	ARM64,
+	ARM,
+	Unknown,
+};
 
 struct Function {
 	std::string_view name;
@@ -19,88 +27,40 @@ struct Function {
 
 class Binary {
   public:
-    enum class Type {
-        Elf32,
-        Elf64,
-    };
+	using ReaderFn = std::function<uint64_t(size_t pos, size_t intSize,
+											const std::vector<uint8_t> &data)>;
 
-    size_t readIntRef(int8_t &ref, size_t position) const noexcept;
-    size_t readIntRef(int16_t &ref, size_t position) const noexcept;
-    size_t readIntRef(int32_t &ref, size_t position) const noexcept;
-    size_t readIntRef(int64_t &ref, size_t position) const noexcept;
-    size_t readIntRef(uint8_t &ref, size_t position) const noexcept;
-    size_t readIntRef(uint16_t &ref, size_t position) const noexcept;
-    size_t readIntRef(uint32_t &ref, size_t position) const noexcept;
-    size_t readIntRef(uint64_t &ref, size_t position) const noexcept;
+	virtual ~Binary() = default;
 
-    virtual ~Binary() = default;
+	Binary(const Binary &) = delete;
+	Binary &operator=(const Binary &) = delete;
 
-	const std::vector<uint8_t> &getData() const noexcept;
+	[[nodiscard]] virtual const std::vector<Function> &
+	getFunctions() const noexcept = 0;
+	[[nodiscard]] virtual std::span<const uint8_t>
+	getFunctionCode(size_t idx) const noexcept = 0;
+	[[nodiscard]] virtual Architecture getArchitecture() const noexcept = 0;
+
+	[[nodiscard]] const std::vector<uint8_t> &getData() const noexcept;
 
   protected:
-    using ReaderFn =
-        std::function<uint64_t(size_t, size_t, const std::vector<uint8_t> &)>;
+	explicit Binary(std::vector<uint8_t> &&data, ReaderFn reader);
 
-    [[nodiscard]] Binary(Type type, std::vector<uint8_t> &&data,
-                         ReaderFn reader);
+	template <std::integral T>
+	size_t readInt(T &ref, size_t pos) const noexcept {
+		ref = static_cast<T>(reader_(pos, sizeof(T), data_));
+		return pos + sizeof(T);
+	}
 
-    std::vector<uint8_t> &getData() noexcept;
-
-  private:
-    Type type_;
-    std::vector<uint8_t> data_;
-    ReaderFn reader_;
-};
-
-class Elf32 : public Binary {
-  public:
-    explicit Elf32(std::vector<uint8_t> &&data);
-
-    [[nodiscard]] Elf32_Ehdr getHeader() const noexcept;
-    [[nodiscard]] Elf32_Shdr getSectionHeader(size_t idx) const noexcept;
-	[[nodiscard]] std::string_view getSectionName(size_t idx) const noexcept;
-	[[nodiscard]] Elf32_Sym getSymbol(size_t idx) const noexcept;
-	[[nodiscard]] const std::vector<Function> &getFunctions() const noexcept;
+	[[nodiscard]] std::vector<uint8_t> &getData() noexcept;
 
   private:
-
-	[[nodiscard]] std::string_view getStringFromTable(size_t tableIdx, size_t offset) const noexcept;
-
-    Elf32_Ehdr header_;
-    std::vector<Elf32_Shdr> sectionHeaders_;
-	std::vector<Elf32_Sym> symtab_;
-	std::vector<Elf32_Sym> dynsymtab_;
-	std::vector<Function> functions_;
-
-	size_t strtabIdx_;
-};
-
-class Elf64 : public Binary {
-  public:
-    explicit Elf64(std::vector<uint8_t> &&data);
-
-    [[nodiscard]] Elf64_Ehdr getHeader() const noexcept;
-    [[nodiscard]] Elf64_Shdr getSectionHeader(size_t idx) const noexcept;
-	[[nodiscard]] std::string_view getSectionName(size_t idx) const noexcept;
-	[[nodiscard]] Elf64_Sym getSymbol(size_t idx) const noexcept;
-	[[nodiscard]] const std::vector<Function> &getFunctions() const noexcept;
-	[[nodiscard]] const std::span<const uint8_t> getFunctionCode(size_t idx) const noexcept;
-
-  private:
-
-	[[nodiscard]] std::string_view getStringFromTable(size_t tableIdx, size_t offset) const noexcept;
-
-    Elf64_Ehdr header_;
-    std::vector<Elf64_Shdr> sectionHeaders_;
-	std::vector<Elf64_Sym> symtab_;
-	std::vector<Elf64_Sym> dynsymtab_;
-	std::vector<Function> functions_;
-
-	size_t strtabIdx_;
+	std::vector<uint8_t> data_;
+	ReaderFn reader_;
 };
 
 [[nodiscard]] std::unique_ptr<Binary> fromFile(std::string_view filepath);
 
-} // namespace binary
+}; // namespace binary
 
 #endif

@@ -11,6 +11,8 @@ set(SOURCES
     src/main.cpp
 	src/binary/binary.cpp
 	include/binary.hpp
+	include/elf_binary.hpp
+	include/elf_types.hpp
 	src/disassemble/x86-64.cpp
 	include/disassemble.hpp
 	src/analysis/demangle.cpp
